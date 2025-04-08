@@ -14,8 +14,8 @@ import argparse
 
 parser=argparse.ArgumentParser(description='define config parameters like port and url')
 parser.add_argument('--broadcast_port',default=8000)
-parser.add_argument('--source_port')
-parser.add_argument('--source_url')
+parser.add_argument('--source_port',default=8010)
+parser.add_argument('--source_url',default='/mozzart/aviator/stream')
 
 args=parser.parse_args()
 
