@@ -191,7 +191,7 @@ class MozzartBroadcaster:
                     
                 while True:
                     try:
-                        latest_multipliers=self.driver.find_element(By.CLASS_NAME,'payouts-block').find_elements(By.CLASS_NAME,'bubble-multiplier')
+                        latest_multipliers=self.driver.find_element(By.CLASS_NAME,'payouts-block').find_elements(By.XPATH,'//div[@class="payout ng-star-inserted" and @appcoloredmultiplier]')
                         check_for_new_data(latest_multipliers)
                     except:
                         raise
