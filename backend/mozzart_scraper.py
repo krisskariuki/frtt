@@ -5,7 +5,7 @@ from flask import Flask,jsonify,request,Response
 from flask_cors import CORS
 from queue import Queue
 from waitress import serve
-from config import DEBUG,MOZZART_URL,MOZZART_BROADCAST_PORT,MOZZART_ACCOUNT_PORT
+from config import DEBUG,LOCAL_IP,MOZZART_URL,MOZZART_BROADCAST_PORT,MOZZART_ACCOUNT_PORT
 import pandas as pd 
 import threading
 import time
@@ -34,7 +34,7 @@ class MozzartBroadcaster:
         self.round_id=0
         self.filename=None
         self.backup=backup
-        self.folder_name='backup'
+        self.folder_name='mozzart'
         self.base_filename='file'
         self.record=None
         self.series=[]
@@ -145,7 +145,7 @@ class MozzartBroadcaster:
             return Response(event_stream(),mimetype='text/event-stream')
         
         def start_server():
-            serve(app,host='0.0.0.0',port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
+            serve(app,host=LOCAL_IP,port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
         
         threading.Thread(target=start_server,daemon=True).start()
 
@@ -183,11 +183,11 @@ class MozzartBroadcaster:
             try:
                 payouts_block=WebDriverWait(self.driver,self.wait_time).until(EC.presence_of_element_located((By.XPATH,'//*[@class="payouts-block"]')))
                 if payouts_block:
-                    print(f'{colors.green}connected to game engine successfully')
-                    self.broadcast_aviator()
-
                     if self.backup:
                         self.manage_backup()
+
+                    self.broadcast_aviator()
+                    print(f'{colors.grey}server running at {colors.cyan}http://{LOCAL_IP}:{MOZZART_BROADCAST_PORT}/betika/aviator/stream|latest|history')
                     
                 while True:
                     try:
@@ -260,14 +260,13 @@ class MozzartAccount(MozzartBroadcaster):
             return Response(event_stream(),mimetype='text/event-stream')
         
         def start_server():
-            serve(app,host='0.0.0.0',port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
+            serve(app,host=LOCAL_IP,port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
         
         threading.Thread(target=start_server,daemon=True).start()
 
-        print(f'account server for {self.account_id}')
+        print(f'started account server for {self.phone}')
     def watch_account(self):
         super().login(self.phone,self.password)
-
 
         def start_trade():
             autobet_panel=WebDriverWait(self.driver,self.wait_time).until(EC.presence_of_element_located((By.XPATH,'//button[normalize-space(text())="Auto"]')))
