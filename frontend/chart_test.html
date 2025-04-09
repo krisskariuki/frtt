@@ -82,7 +82,7 @@
             position:absolute;
             top:120px;
             width: 95vw;
-            height: 720px;
+            height: 60vh;
         }
 
         .inactive_button{
@@ -291,8 +291,8 @@
 
         // Clear existing data
         candleSeries.setData([]);
-        ema20Series.setData([]);
-        ema200Series.setData([]);
+        // ema20Series.setData([]);
+        // ema200Series.setData([]);
         markers = [];
         currentSignal = null;
 
@@ -355,8 +355,8 @@
                 });
 
                 candleSeries.setData(formattedCandles);
-                ema20Series.setData(formattedEma20);
-                ema200Series.setData(formattedEma200);
+                // ema20Series.setData(formattedEma20);
+                // ema200Series.setData(formattedEma200);
                 candleSeries.setMarkers(markers);
 
                 lastCandle = formattedCandles[formattedCandles.length - 1];
@@ -383,8 +383,8 @@
             lastEma200Point = { time: item.unix_time, value: item.ema_50 };
 
             candleSeries.update(lastCandle);
-            ema20Series.update(lastEma20Point);
-            ema200Series.update(lastEma200Point);
+            // ema20Series.update(lastEma20Point);
+            // ema200Series.update(lastEma200Point);
 
             if (item.signal) {
                 checkForSignal(item);
