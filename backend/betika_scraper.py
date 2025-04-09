@@ -5,7 +5,7 @@ from flask import Flask,jsonify,request,Response
 from flask_cors import CORS
 from queue import Queue
 from waitress import serve
-from config import BETIKA_PORT,BETIKA_URL
+from config import DEBUG,LOCAL_IP,BETIKA_BROADCAST_PORT,BETIKA_URL
 import pandas as pd 
 import threading
 import time
@@ -19,7 +19,7 @@ CORS(app)
 class BetikaBroadcaster:
     def __init__(self,headless=False,window_size=(800,1080),wait_time=20,retries=4,backup=False):
         self.url=BETIKA_URL
-        self.headless=headless
+        self.headless=not DEBUG
         self.window_size=window_size
         self.wait_time=wait_time
         self.retries=retries
@@ -27,14 +27,14 @@ class BetikaBroadcaster:
         self.medium_delay=lambda:time.sleep(random.uniform(4,6))
         self.long_delay=lambda:time.sleep(random.uniform(7,9))
 
-        self.port=BETIKA_PORT
+        self.port=BETIKA_BROADCAST_PORT
 
         self.lock=threading.Lock()
 
         self.round_id=0
         self.filename=None
         self.backup=backup
-        self.folder_name='backup'
+        self.folder_name='betika'
         self.base_filename='file'
         self.record=None
         self.series=[]
@@ -121,20 +121,20 @@ class BetikaBroadcaster:
         
         self.medium_delay()
         print(f'{colors.cyan}connecting to game engine...')
-        WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//span[normalize-space(text())="Aviator"]'))).click()
+        WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//span[text()="Aviator"]'))).click()
 
     def broadcast_aviator(self):      
-        @app.route('/mozzart/aviator/latest',methods=['GET'])
+        @app.route('/betika/aviator/latest',methods=['GET'])
         def get_latest():
             with self.lock:
                 return jsonify(self.record)
 
-        @app.route('/mozzart/aviator/history',methods=['GET'])
+        @app.route('/betika/aviator/history',methods=['GET'])
         def get_history():
             with self.lock:
                 return jsonify(self.series)
 
-        @app.route('/mozzart/aviator/stream',methods=['GET'])
+        @app.route('/betika/aviator/stream',methods=['GET'])
         def stream_data():
             def event_stream():
                 queue=Queue()
@@ -151,7 +151,7 @@ class BetikaBroadcaster:
             return Response(event_stream(),mimetype='text/event-stream')
         
         def start_server():
-            serve(app,host='0.0.0.0',port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
+            serve(app,host=LOCAL_IP,port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
         
         threading.Thread(target=start_server,daemon=True).start()
 
@@ -189,15 +189,15 @@ class BetikaBroadcaster:
             try:
                 payouts_block=WebDriverWait(self.driver,self.wait_time).until(EC.presence_of_element_located((By.XPATH,'//*[@class="payouts-block"]')))
                 if payouts_block:
-                    print(f'{colors.green}connected to game engine successfully')
-                    self.broadcast_aviator()
-
                     if self.backup:
                         self.manage_backup()
+
+                    self.broadcast_aviator()
+                    print(f'{colors.grey}server running at {colors.cyan}http://{LOCAL_IP}:{BETIKA_BROADCAST_PORT}/betika/aviator/stream|latest|history')
                     
                 while True:
                     try:
-                        latest_multipliers=self.driver.find_element(By.CLASS_NAME,'payouts-block').find_elements(By.CLASS_NAME,'bubble-multiplier')
+                        latest_multipliers=self.driver.find_element(By.CLASS_NAME,'payouts-block').find_elements(By.XPATH,'//div[@class="payout ng-star-inserted" and @appcoloredmultiplier]')
                         check_for_new_data(latest_multipliers)
                     except:
                         raise
@@ -208,3 +208,9 @@ class BetikaBroadcaster:
                 print(f'{colors.red}game engine error!\n{colors.yellow}{e}')
             
         threading.Thread(target=run_aviator,daemon=True).start()
+
+bb=BetikaBroadcaster()
+bb.login('0117199001','0117199001')
+bb.watch_aviator()
+
+main_thread()
