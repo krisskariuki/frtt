@@ -7,7 +7,7 @@ debug_boolmap={'true':True,'false':False}
 DEBUG=debug_boolmap[debug]
 
 TARGET_MULTIPLIERS=['2.00','3.00','5.00','10.00','15.00','20.00','25.00','30.00','35.00','40.00','45.00','50.00']
-TIME_FRAMES=['minute_5','minute_10','minute_15','minute_30','hour_1']
+TIME_FRAMES=['minute_5','minute_10','minute_15','minute_30','hour_1','hour_4','hour_6','day_1']
 
 LOCAL_IP=socket.gethostbyname(socket.gethostname())
 
