@@ -12,6 +12,11 @@ import time
 import os
 import random
 import json
+import argparse
+
+parser=argparse.ArgumentParser(description='configuration parameters for mozzart scraper')
+parser.add_argument('--backup',action='store_true')
+parser_args=parser.parse_args()
 
 app=Flask(__name__)
 CORS(app)
@@ -176,8 +181,8 @@ class MozzartBroadcaster:
                             client.put(self.record)
                         except:
                             self.clients.remove(client)
-
-                    print(f'{colors.grey}round_id: {self.round_id} | std_time: {std_time} | multiplier: {multiplier}')
+                    if DEBUG:
+                        print(f'{colors.grey}round_id: {self.round_id} | std_time: {std_time} | multiplier: {multiplier}')
         
         def run_aviator():
             try:
@@ -332,8 +337,9 @@ class MozzartAccount(MozzartBroadcaster):
                 with self.lock:
                     self.record={'std_time':std_time,'unix_time':unix_time,'balance':self.balance}
                     self.series.append(self.record)
-
-                print(f'time:{std_time} | balance: {self.balance}')
+                
+                if DEBUG:
+                    print(f'time:{std_time} | balance: {self.balance}')
         
         def run_account():
             try:
@@ -358,7 +364,7 @@ class MozzartAccount(MozzartBroadcaster):
         threading.Thread(target=run_account,daemon=True).start()
 
 
-mb=MozzartBroadcaster()
+mb=MozzartBroadcaster(backup=parser_args.backup)
 mb.login('0117199001','Chri570ph3r.')
 mb.watch_aviator()
 
