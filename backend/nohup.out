@@ -1,0 +1,37 @@
+navigating to https://www.mozzartbet.co.ke/en#/...
+logging in...
+writing phone...
+writing password...
+submitting...
+connecting to game engine...
+server running at http://10.128.0.3:8010/betika/aviator/stream|latest|history
+
+
+connected to: http://34.133.173.173:8010//mozzart/aviator/stream
+
+
+Started transformer
+server is running on http://34.133.173.173:8000
+
+Exception in thread Thread-3 (run_app):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/incubatorarea51/frtt/backend/transformer.py", line 124, in run_app
+    serve(app,host='0.0.0.0',port=args.broadcast_port,channel_timeout=300,threads=50,connection_limit=500)
+  File "/home/incubatorarea51/frtt/backend/venv/lib/python3.12/site-packages/waitress/__init__.py", line 13, in serve
+    server = _server(app, **kw)
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/incubatorarea51/frtt/backend/venv/lib/python3.12/site-packages/waitress/server.py", line 78, in create_server
+    last_serv = TcpWSGIServer(
+                ^^^^^^^^^^^^^^
+  File "/home/incubatorarea51/frtt/backend/venv/lib/python3.12/site-packages/waitress/server.py", line 243, in __init__
+    self.bind_server_socket()
+  File "/home/incubatorarea51/frtt/backend/venv/lib/python3.12/site-packages/waitress/server.py", line 364, in bind_server_socket
+    self.bind(sockaddr)
+  File "/home/incubatorarea51/frtt/backend/venv/lib/python3.12/site-packages/waitress/wasyncore.py", line 374, in bind
+    return self.socket.bind(addr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 98] Address already in use
