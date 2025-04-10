@@ -150,7 +150,7 @@ class MozzartBroadcaster:
             return Response(event_stream(),mimetype='text/event-stream')
         
         def start_server():
-            serve(app,host=LOCAL_IP,port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
+            serve(app,host='0.0.0.0',port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
         
         threading.Thread(target=start_server,daemon=True).start()
 
@@ -265,7 +265,7 @@ class MozzartAccount(MozzartBroadcaster):
             return Response(event_stream(),mimetype='text/event-stream')
         
         def start_server():
-            serve(app,host=LOCAL_IP,port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
+            serve(app,host='0.0.0.0',port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
         
         threading.Thread(target=start_server,daemon=True).start()
 

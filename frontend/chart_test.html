@@ -190,7 +190,7 @@
     </section>
 
     <script>
-
+    const host = '34.133.173.173'
     const port = 8000;
     let chosen_multiplier, chosen_timeframe;
     let lastCandle = null;
@@ -258,7 +258,7 @@
         'STRONG SELL': 'red'
     };
 
-    async function login_action(e, url = `http://localhost:8888/floatiq/login`) {
+    async function login_action(e, url = `http://${host}:8888/floatiq/login`) {
         e.preventDefault();
         const formData = new FormData(formElement);
         console.log('logged into:', formData.get('game_provider'));
@@ -297,9 +297,9 @@
         currentSignal = null;
 
         // Fetch new data
-        fetchInitialData(`http://localhost:${port}/market/history?timeframe=${timeframe}&target=${target}`);
+        fetchInitialData(`http://${host}:${port}/market/history?timeframe=${timeframe}&target=${target}`);
         if (eventSource) eventSource.close(); // Close previous SSE connection
-        subscribeToUpdates(`http://localhost:${port}/market/stream?timeframe=${timeframe}&target=${target}`);
+        subscribeToUpdates(`http://${host}:${port}/market/stream?timeframe=${timeframe}&target=${target}`);
     }
 
     function fetchInitialData(url) {
@@ -419,8 +419,8 @@
     function open_homepage() {
         const timeframe = timeframe_input.value || 'minute_10';
         const target = multiplier_input.value || '15.00';
-        fetchInitialData(`http://localhost:${port}/market/history?timeframe=${timeframe}&target=${target}`);
-        subscribeToUpdates(`http://localhost:${port}/market/stream?timeframe=${timeframe}&target=${target}`);
+        fetchInitialData(`http:/${host}:${port}/market/history?timeframe=${timeframe}&target=${target}`);
+        subscribeToUpdates(`http://${host}:${port}/market/stream?timeframe=${timeframe}&target=${target}`);
     }
 
     // Initial load

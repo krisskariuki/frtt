@@ -14,6 +14,7 @@ import argparse
 
 parser=argparse.ArgumentParser(description='define config parameters like port and url')
 parser.add_argument('--broadcast_port',default=8000)
+parser.add_argument('--source_host')
 parser.add_argument('--source_port',default=8010)
 parser.add_argument('--source_url',default='/mozzart/aviator/stream')
 
@@ -119,7 +120,7 @@ class Transformer:
                 return Response(event_stream(),mimetype='text/event-stream')
 
         def run_app():
-            print(f'\n{colors.green}Started transformer\n{colors.white}server is running on {colors.cyan}http://localhost:{args.broadcast_port}\n')
+            print(f'\n{colors.green}Started transformer\n{colors.white}server is running on {colors.cyan}http://{args.source_host}:{args.broadcast_port}\n')
             serve(app,host='0.0.0.0',port=args.broadcast_port,channel_timeout=300,threads=50,connection_limit=500)
 
         threading.Thread(target=run_app,daemon=True).start()
@@ -236,7 +237,7 @@ class Transformer:
         threading.Thread(target=run_transformer,daemon=True).start()
 
 tf=Transformer()
-tf.connect(f'http://localhost:{args.source_port}/{args.source_url}')
+tf.connect(f'http://{args.source_host}:{args.source_port}/{args.source_url}')
 tf.transform(TIME_FRAMES,TARGET_MULTIPLIERS)
 tf.broadcast()
 
