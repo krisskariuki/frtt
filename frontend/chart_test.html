@@ -419,7 +419,7 @@
     function open_homepage() {
         const timeframe = timeframe_input.value || 'minute_10';
         const target = multiplier_input.value || '15.00';
-        fetchInitialData(`http:/${host}:${port}/market/history?timeframe=${timeframe}&target=${target}`);
+        fetchInitialData(`http://${host}:${port}/market/history?timeframe=${timeframe}&target=${target}`);
         subscribeToUpdates(`http://${host}:${port}/market/stream?timeframe=${timeframe}&target=${target}`);
     }
 
