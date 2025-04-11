@@ -14,7 +14,7 @@ import argparse
 
 parser=argparse.ArgumentParser(description='define config parameters like port and url')
 parser.add_argument('--broadcast_port',default=8000)
-parser.add_argument('--source_host')
+parser.add_argument('--host')
 parser.add_argument('--source_port',default=8010)
 parser.add_argument('--source_url',default='/mozzart/aviator/stream')
 
@@ -56,17 +56,36 @@ class Transformer:
 
     def connect(self,sse_url):
         def run_connect():
-            try:
-                print(f'\n\n{colors.green}connected to: {colors.cyan}{sse_url}\n')
-                for item in SSEClient(sse_url):
+            max_retries=5
+            retries=0
+            retry_delay=5
+
+            while retries < max_retries:
+                try:
+                    client=SSEClient(sse_url)
+                    first_item_received=next(client)
+                    print(f'\n\n{colors.green}connected to: {colors.cyan}{sse_url}\n')
+
                     with self.lock:
                         self.recv_record=json.loads(item.data)
 
+                    for item in client:
+                        with self.lock:
+                            self.recv_record=json.loads(item.data)
+                    break
 
-            except:
-                print(f'\n\n{colors.red}connection error!\n{colors.yellow}failed to connect to: {colors.cyan}{sse_url}\n')
-                sys.exit(1)
-        
+                except Exception as E:
+                    retries+=1
+                    print(f'\n{colors.red}connection error!\n{colors.yellow}failed to connect to:{sse_url}.\n{colors.yellow}Reason:{E}')
+
+                    if retries < max_retries:
+                        print(f'{colors.magenta}[{retries}] Retrying in {retry_delay} seconds...\n')
+                        time.sleep(retry_delay)
+                    
+                    else:
+                        print(f'{colors.red}Max retries reached.Aborting.')
+                        sys.exit(1)
+
         threading.Thread(target=run_connect,daemon=True).start()
     
     def broadcast(self):
@@ -120,7 +139,7 @@ class Transformer:
                 return Response(event_stream(),mimetype='text/event-stream')
 
         def run_app():
-            print(f'\n{colors.green}Started transformer\n{colors.white}server is running on {colors.cyan}http://{args.source_host}:{args.broadcast_port}\n')
+            print(f'transformer server is running on {colors.cyan}http://{args.source_host}:{args.broadcast_port}\n')
             serve(app,host='0.0.0.0',port=args.broadcast_port,channel_timeout=300,threads=50,connection_limit=500)
 
         threading.Thread(target=run_app,daemon=True).start()
