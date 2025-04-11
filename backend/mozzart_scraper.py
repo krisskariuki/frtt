@@ -13,16 +13,24 @@ import os
 import random
 import json
 import argparse
+import sys
 
 parser=argparse.ArgumentParser(description='configuration parameters for mozzart scraper')
 parser.add_argument('--backup',action='store_true')
+parser.add_argument('--phone')
+parser.add_argument('--password')
 parser_args=parser.parse_args()
 
+broadcast_app=Flask(__name__)
 app=Flask(__name__)
+
+CORS(broadcast_app)
 CORS(app)
 
 class MozzartBroadcaster:
-    def __init__(self,window_size=(800,1080),wait_time=20,retries=4,backup=False):
+    def __init__(self,phone,password,window_size=(800,1080),wait_time=20,retries=4,backup=False):
+        self.phone=phone
+        self.password=password
         self.window_size=window_size
         self.wait_time=wait_time
         self.retries=retries
@@ -46,7 +54,7 @@ class MozzartBroadcaster:
 
         self.clients=set()
         
-    def start_driver(self):
+    def start(self):
         options=uc.ChromeOptions()
         width,height=self.window_size
 
@@ -75,13 +83,13 @@ class MozzartBroadcaster:
         self.driver.get(self.url)
         print(f'{colors.cyan}navigating to {self.url}...')
     
-    def restart_driver(self):
+    def restart(self):
         try:
             self.driver.quit()
         except:
             pass
         time.sleep(1)
-        self.start_driver()
+        self.start()
     
     def manage_backup(self):
         os.makedirs(self.folder_name,exist_ok=True)
@@ -99,19 +107,18 @@ class MozzartBroadcaster:
             if self.record and isinstance(self.record,dict):
                 pd.DataFrame([self.record]).to_csv(self.filename,mode='a',index=False,header=False)
     
-    def login(self,phone,password):
-        self.start_driver()
+    def login(self):
         print(f'{colors.cyan}logging in...')
         WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//a[@class="login-link mozzart_ke"]'))).click()
 
         self.short_delay()
         print(f'{colors.cyan}writing phone...')
-        WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//input[@placeholder="Mobile number"]'))).send_keys(phone)
+        WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//input[@placeholder="Mobile number"]'))).send_keys(self.phone)
         
 
         self.short_delay()
         print(f'{colors.cyan}writing password...')
-        WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//input[@placeholder="Password"]'))).send_keys(password)
+        WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//input[@placeholder="Password"]'))).send_keys(self.password)
         
         self.short_delay()
         print(f'{colors.cyan}submitting...')
@@ -123,17 +130,17 @@ class MozzartBroadcaster:
         WebDriverWait(self.driver,self.wait_time).until(EC.element_to_be_clickable((By.XPATH,'//img[@alt="Aviator"]'))).click()
 
     def broadcast_aviator(self):      
-        @app.route('/mozzart/aviator/latest',methods=['GET'])
+        @broadcast_app.route('/mozzart/aviator/latest',methods=['GET'])
         def get_latest():
             with self.lock:
                 return jsonify(self.record)
 
-        @app.route('/mozzart/aviator/history',methods=['GET'])
+        @broadcast_app.route('/mozzart/aviator/history',methods=['GET'])
         def get_history():
             with self.lock:
                 return jsonify(self.series)
 
-        @app.route('/mozzart/aviator/stream',methods=['GET'])
+        @broadcast_app.route('/mozzart/aviator/stream',methods=['GET'])
         def stream_data():
             def event_stream():
                 queue=Queue()
@@ -150,7 +157,7 @@ class MozzartBroadcaster:
             return Response(event_stream(),mimetype='text/event-stream')
         
         def start_server():
-            serve(app,host='0.0.0.0',port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
+            serve(broadcast_app,host='0.0.0.0',port=self.port,channel_timeout=300,threads=50,backlog=1000,connection_limit=500)
         
         threading.Thread(target=start_server,daemon=True).start()
 
@@ -191,10 +198,9 @@ class MozzartBroadcaster:
                     if self.backup:
                         self.manage_backup()
 
-                    self.broadcast_aviator()
-                    print(f'{colors.grey}server running at {colors.cyan}http://{LOCAL_IP}:{MOZZART_BROADCAST_PORT}/betika/aviator/stream|latest|history')
+                    print(f'{colors.grey}server running at {colors.cyan}http://{LOCAL_IP}:{MOZZART_BROADCAST_PORT}/mozzart/aviator/stream|latest|history')
                     
-                while True:
+                while True: 
                     try:
                         latest_multipliers=self.driver.find_element(By.CLASS_NAME,'payouts-block').find_elements(By.XPATH,'//div[@class="payout ng-star-inserted" and @appcoloredmultiplier]')
                         check_for_new_data(latest_multipliers)
@@ -204,7 +210,17 @@ class MozzartBroadcaster:
                     time.sleep(1)
 
             except Exception as e:
+                
+                if self.retries<=0:
+                    print(f'{colors.red}max retries reached!')
+                    sys.exit(1)
+
                 print(f'{colors.red}game engine error!\n{colors.yellow}{e}')
+                self.restart()
+                self.login()
+                self.watch_aviator()
+
+                self.retries-=1
             
         threading.Thread(target=run_aviator,daemon=True).start()
 
@@ -364,8 +380,10 @@ class MozzartAccount(MozzartBroadcaster):
         threading.Thread(target=run_account,daemon=True).start()
 
 
-mb=MozzartBroadcaster(backup=parser_args.backup)
-mb.login('0117199001','Chri570ph3r.')
+mb=MozzartBroadcaster(phone='0117199001',password='Chri570ph3r.',backup=parser_args.backup)
+mb.start()
+mb.login()
 mb.watch_aviator()
+mb.broadcast_aviator()
 
 main_thread()
