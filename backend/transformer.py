@@ -139,7 +139,7 @@ class Transformer:
                 return Response(event_stream(),mimetype='text/event-stream')
 
         def run_app():
-            print(f'transformer server is running on {colors.cyan}http://{args.source_host}:{args.broadcast_port}\n')
+            print(f'transformer server is running on {colors.cyan}http://{args.host}:{args.broadcast_port}\n')
             serve(app,host='0.0.0.0',port=args.broadcast_port,channel_timeout=300,threads=50,connection_limit=500)
 
         threading.Thread(target=run_app,daemon=True).start()
