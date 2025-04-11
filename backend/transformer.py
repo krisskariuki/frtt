@@ -158,9 +158,9 @@ class Transformer:
         def get_signal(ema_9,ema_20,ema_50,ema_200):
             nonlocal last_signal
             signal=None
-            # if ema_9>ema_20>ema_50>ema_200:
-            #     signal='BUY LONG'
-            if ema_9>ema_20>ema_50:
+            if ema_9>ema_20>ema_50>ema_200:
+                signal='BUY LONG'
+            elif ema_9>ema_20>ema_50:
                 signal='BUY'
             elif ema_9<ema_20<ema_50<ema_200:
                 signal='SELL LONG'
